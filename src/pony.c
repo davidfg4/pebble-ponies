@@ -1,9 +1,12 @@
 #include <pebble.h>
 
+int i;
 static Window *window;
-static TextLayer *s_time_layer;
-static TextLayer *s_date_layer;
-static GBitmap *s_bitmap;
+static TextLayer* s_time_layer;
+static TextLayer* s_time_shadow_layers[4];
+static TextLayer* s_date_layer;
+static TextLayer* s_date_shadow_layers[4];
+static GBitmap* s_bitmap;
 static BitmapLayer *s_bitmap_layer;
 static uint32_t images[] = {RESOURCE_ID_PONY01,
                             RESOURCE_ID_PONY02,
@@ -85,6 +88,9 @@ static void update_time() {
 
   strftime(date_text, sizeof(date_text), "%a, %b %e", tick_time);
   text_layer_set_text(s_date_layer, date_text);
+  for (i = 0; i < 4; i++) {
+    text_layer_set_text(s_date_shadow_layers[i], date_text);
+  }
 
   if(clock_is_24h_style() == true) {
     strftime(buffer, sizeof("00:00"), "%H:%M", tick_time);
@@ -96,6 +102,9 @@ static void update_time() {
   }
 
   text_layer_set_text(s_time_layer, buffer);
+  for (i = 0; i < 4; i++) {
+    text_layer_set_text(s_time_shadow_layers[i], buffer);
+  }
 
   gbitmap_destroy(s_bitmap);
   int image = rand() % (sizeof(images) / sizeof(images[0]));
@@ -111,12 +120,32 @@ static void window_load(Window *window) {
   Layer *window_layer = window_get_root_layer(window);
   GRect bounds = layer_get_bounds(window_layer);
 
+  s_bitmap = gbitmap_create_with_resource(images[0]);
+  s_bitmap_layer = bitmap_layer_create(bounds);
+  bitmap_layer_set_bitmap(s_bitmap_layer, s_bitmap);
+  bitmap_layer_set_compositing_mode(s_bitmap_layer, GCompOpSet);
+
+  layer_add_child(window_layer, bitmap_layer_get_layer(s_bitmap_layer));
+
   s_time_layer = text_layer_create(GRect(0, 168-56, 144, 56));
   text_layer_set_background_color(s_time_layer, GColorClear);
   text_layer_set_text_color(s_time_layer, GColorBlack);
   text_layer_set_text(s_time_layer, "00:00");
   text_layer_set_font(s_time_layer, fonts_get_system_font(FONT_KEY_ROBOTO_BOLD_SUBSET_49));
   text_layer_set_text_alignment(s_time_layer, GTextAlignmentCenter);
+
+  s_time_shadow_layers[0] = text_layer_create(GRect(2, 168-56+2, 144, 56));
+  s_time_shadow_layers[1] = text_layer_create(GRect(2, 168-56-2, 144, 56));
+  s_time_shadow_layers[2] = text_layer_create(GRect(-2, 168-56+2, 144, 56));
+  s_time_shadow_layers[3] = text_layer_create(GRect(i-2, 168-56-2, 144, 56));
+  for (i = 0; i < 4; i++) {
+    text_layer_set_background_color(s_time_shadow_layers[i], GColorClear);
+    text_layer_set_text_color(s_time_shadow_layers[i], GColorWhite);
+    text_layer_set_text(s_time_shadow_layers[i], "00:00");
+    text_layer_set_font(s_time_shadow_layers[i], fonts_get_system_font(FONT_KEY_ROBOTO_BOLD_SUBSET_49));
+    text_layer_set_text_alignment(s_time_shadow_layers[i], GTextAlignmentCenter);
+    layer_add_child(window_layer, text_layer_get_layer(s_time_shadow_layers[i]));
+  }
 
   s_date_layer = text_layer_create(GRect(0, 0, 144, 40));
   text_layer_set_background_color(s_date_layer, GColorClear);
@@ -125,12 +154,19 @@ static void window_load(Window *window) {
   text_layer_set_font(s_date_layer, fonts_get_system_font(FONT_KEY_ROBOTO_CONDENSED_21));
   text_layer_set_text_alignment(s_date_layer, GTextAlignmentCenter);
 
-  s_bitmap = gbitmap_create_with_resource(images[0]);
-  s_bitmap_layer = bitmap_layer_create(bounds);
-  bitmap_layer_set_bitmap(s_bitmap_layer, s_bitmap);
-  bitmap_layer_set_compositing_mode(s_bitmap_layer, GCompOpSet);
+  s_date_shadow_layers[0] = text_layer_create(GRect(1, 1, 144, 40));
+  s_date_shadow_layers[1] = text_layer_create(GRect(1,- 1, 144, 40));
+  s_date_shadow_layers[2] = text_layer_create(GRect(-1, 1, 144, 40));
+  s_date_shadow_layers[3] = text_layer_create(GRect(-1, -1, 144, 40));
+  for (i = 0; i < 4; i++) {
+    text_layer_set_background_color(s_date_shadow_layers[i], GColorClear);
+    text_layer_set_text_color(s_date_shadow_layers[i], GColorWhite);
+    text_layer_set_text(s_date_shadow_layers[i], "Xxx, Xxx 00");
+    text_layer_set_font(s_date_shadow_layers[i], fonts_get_system_font(FONT_KEY_ROBOTO_CONDENSED_21));
+    text_layer_set_text_alignment(s_date_shadow_layers[i], GTextAlignmentCenter);
+    layer_add_child(window_layer, text_layer_get_layer(s_date_shadow_layers[i]));
+  }
 
-  layer_add_child(window_layer, bitmap_layer_get_layer(s_bitmap_layer));
   layer_add_child(window_layer, text_layer_get_layer(s_time_layer));
   layer_add_child(window_layer, text_layer_get_layer(s_date_layer));
 
@@ -139,7 +175,13 @@ static void window_load(Window *window) {
 
 static void window_unload(Window *window) {
   text_layer_destroy(s_time_layer);
+  for (i = 0; i < 4; i++) {
+    text_layer_destroy(s_time_shadow_layers[i]);
+  }
   text_layer_destroy(s_date_layer);
+  for (i = 0; i < 4; i++) {
+    text_layer_destroy(s_date_shadow_layers[i]);
+  }
   bitmap_layer_destroy(s_bitmap_layer);
   gbitmap_destroy(s_bitmap);
 }

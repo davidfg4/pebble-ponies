@@ -12,6 +12,17 @@
     "dummy": 0
   },
   "resources": {
-    "media": []
-  }
+    "media": [
+      {
+        "type": "png",
+        "name": "DASH01",
+        "file": "images/dash01.png"
+      }
+    ]
+  },
+  "targetPlatforms": [
+    "aplite",
+    "basalt"
+  ],
+  "sdkVersion": "3"
 }

@@ -1,0 +1,17 @@
+{
+  "uuid": "8c92b002-47e5-4123-809b-35fd2a9f982c",
+  "shortName": "pony",
+  "longName": "pony",
+  "companyName": "David Gianforte",
+  "versionCode": 1,
+  "versionLabel": "0.1",
+  "watchapp": {
+    "watchface": true
+  },
+  "appKeys": {
+    "dummy": 0
+  },
+  "resources": {
+    "media": []
+  }
+}

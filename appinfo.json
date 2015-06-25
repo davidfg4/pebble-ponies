@@ -13,11 +13,15 @@
   },
   "resources": {
     "media": [
-      {
-        "type": "png",
-        "name": "DASH01",
-        "file": "images/dash01.png"
-      }
+      {"type": "png", "name": "PONY01", "file": "images/a_dash_of_adorable_by_redtoxindash-d6bdrma.png"},
+      {"type": "png", "name": "PONY02", "file": "images/applejack_by_energyfrost-d5zotp6.png"},
+      {"type": "png", "name": "PONY03", "file": "images/balloons_by_jennieoo-d5e8t2g.png"},
+      {"type": "png", "name": "PONY04", "file": "images/fluttershy_is____umm____ready__by_thatguy1945-d5vfkx9.png"},
+      {"type": "png", "name": "PONY05", "file": "images/pissed_rarity_by_izanoslayer-d5di2zb.png"},
+      {"type": "png", "name": "PONY06", "file": "images/rainbow_dash_flying_by_davidfg4-d6v5a5n.png"},
+      {"type": "png", "name": "PONY07", "file": "images/rarity_by_uxyd-d5gdbgj.png"},
+      {"type": "png", "name": "PONY08", "file": "images/twi_by_azizthewazon-d78gxo8.png"},
+      {"type": "png", "name": "PONY09", "file": "images/twilight_pondering__s04e23__by_djdavidhu-d7gu1qf.png"}
     ]
   },
   "targetPlatforms": [

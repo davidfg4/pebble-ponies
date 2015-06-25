@@ -5,6 +5,15 @@ static TextLayer *s_time_layer;
 static TextLayer *s_date_layer;
 static GBitmap *s_bitmap;
 static BitmapLayer *s_bitmap_layer;
+static uint32_t images[] = {RESOURCE_ID_PONY01,
+                            RESOURCE_ID_PONY02,
+                            RESOURCE_ID_PONY03,
+                            RESOURCE_ID_PONY04,
+                            RESOURCE_ID_PONY05,
+                            RESOURCE_ID_PONY06,
+                            RESOURCE_ID_PONY07,
+                            RESOURCE_ID_PONY08,
+                            RESOURCE_ID_PONY09};
 
 
 static void update_time() {
@@ -27,6 +36,11 @@ static void update_time() {
   }
 
   text_layer_set_text(s_time_layer, buffer);
+
+  gbitmap_destroy(s_bitmap);
+  int image = rand() % (sizeof(images) / sizeof(images[0]));
+  s_bitmap = gbitmap_create_with_resource(images[image]);
+  bitmap_layer_set_bitmap(s_bitmap_layer, s_bitmap);
 }
 
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
@@ -51,7 +65,7 @@ static void window_load(Window *window) {
   text_layer_set_font(s_date_layer, fonts_get_system_font(FONT_KEY_ROBOTO_CONDENSED_21));
   text_layer_set_text_alignment(s_date_layer, GTextAlignmentCenter);
 
-  s_bitmap = gbitmap_create_with_resource(RESOURCE_ID_DASH01);
+  s_bitmap = gbitmap_create_with_resource(images[0]);
   s_bitmap_layer = bitmap_layer_create(bounds);
   bitmap_layer_set_bitmap(s_bitmap_layer, s_bitmap);
   bitmap_layer_set_compositing_mode(s_bitmap_layer, GCompOpSet);
@@ -65,6 +79,8 @@ static void window_load(Window *window) {
 
 static void window_unload(Window *window) {
   text_layer_destroy(s_time_layer);
+  text_layer_destroy(s_date_layer);
+  bitmap_layer_destroy(s_bitmap_layer);
   gbitmap_destroy(s_bitmap);
 }
 
@@ -86,9 +102,6 @@ static void deinit(void) {
 
 int main(void) {
   init();
-
-  APP_LOG(APP_LOG_LEVEL_DEBUG, "Done initializing, pushed window: %p", window);
-
   app_event_loop();
   deinit();
 }

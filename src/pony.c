@@ -6,6 +6,7 @@ static TextLayer* s_time_layer;
 static TextLayer* s_time_shadow_layers[4];
 static TextLayer* s_date_layer;
 static TextLayer* s_date_shadow_layers[4];
+static Layer* battery_layer;
 static GBitmap* s_bitmap;
 static BitmapLayer *s_bitmap_layer;
 static uint32_t images[] = {RESOURCE_ID_PONY01,
@@ -78,6 +79,24 @@ static uint32_t images[] = {RESOURCE_ID_PONY01,
                             RESOURCE_ID_PONY68,
                             RESOURCE_ID_PONY69,
                             RESOURCE_ID_PONY70};
+
+static void draw_battery(Layer *layer, GContext *ctx) {
+  BatteryChargeState charge_state = battery_state_service_peek();
+  GRect bounds = layer_get_bounds(layer);
+
+  // Draw white around battery meter
+  graphics_context_set_stroke_color(ctx, GColorWhite);
+  graphics_context_set_fill_color(ctx, GColorWhite);
+  graphics_fill_rect(ctx, GRect(0,0,14,7), 0, GCornerNone);
+  graphics_draw_line(ctx, GPoint(14,1), GPoint(14,5));
+  // Draw battery meter border
+  graphics_context_set_stroke_color(ctx, GColorBlack);
+  graphics_context_set_fill_color(ctx, GColorBlack);
+  graphics_draw_rect(ctx, GRect(1,1,12,5));
+  graphics_draw_line(ctx, GPoint(13,2), GPoint(13,4));
+  // Draw battery meter
+  graphics_fill_rect(ctx, GRect(2,2,charge_state.charge_percent/10,3), 0, GCornerNone);
+}
 
 static void update_time() {
   time_t temp = time(NULL); 
@@ -170,6 +189,10 @@ static void window_load(Window *window) {
   layer_add_child(window_layer, text_layer_get_layer(s_time_layer));
   layer_add_child(window_layer, text_layer_get_layer(s_date_layer));
 
+  battery_layer = layer_create(GRect(125, 5, 15, 7));
+  layer_set_update_proc(battery_layer, draw_battery);
+  layer_add_child(window_layer, battery_layer);
+
   update_time();
 }
 
@@ -183,6 +206,7 @@ static void window_unload(Window *window) {
     text_layer_destroy(s_date_shadow_layers[i]);
   }
   bitmap_layer_destroy(s_bitmap_layer);
+  layer_destroy(battery_layer);
   gbitmap_destroy(s_bitmap);
 }
 

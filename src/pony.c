@@ -5,7 +5,7 @@ static void init(void);
 static void deinit(void);
 static void update_time(bool new_image);
 
-static int i;
+static unsigned int i;
 static Window *window;
 static TextLayer* s_time_layer;
 static TextLayer* s_time_shadow_layers[4];
@@ -171,6 +171,10 @@ static void update_time(bool new_image) {
   }
 }
 
+static void battery_handler(BatteryChargeState charge) {
+  update_time(false);
+}
+
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
   update_time(true);
 }
@@ -204,7 +208,7 @@ static void window_load(Window *window) {
   s_time_shadow_layers[0] = text_layer_create(GRect(2, 168-56+2, 144, 56));
   s_time_shadow_layers[1] = text_layer_create(GRect(2, 168-56-2, 144, 56));
   s_time_shadow_layers[2] = text_layer_create(GRect(-2, 168-56+2, 144, 56));
-  s_time_shadow_layers[3] = text_layer_create(GRect(i-2, 168-56-2, 144, 56));
+  s_time_shadow_layers[3] = text_layer_create(GRect(-2, 168-56-2, 144, 56));
   for (i = 0; i < 4; i++) {
     text_layer_set_background_color(s_time_shadow_layers[i], GColorClear);
     text_layer_set_text_color(s_time_shadow_layers[i], background_color);
@@ -226,7 +230,7 @@ static void window_load(Window *window) {
 
   // Around the date text put four copies in the opposite color for readability
   s_date_shadow_layers[0] = text_layer_create(GRect(1, 1, 144, 40));
-  s_date_shadow_layers[1] = text_layer_create(GRect(1,- 1, 144, 40));
+  s_date_shadow_layers[1] = text_layer_create(GRect(1, -1, 144, 40));
   s_date_shadow_layers[2] = text_layer_create(GRect(-1, 1, 144, 40));
   s_date_shadow_layers[3] = text_layer_create(GRect(-1, -1, 144, 40));
   for (i = 0; i < 4; i++) {
@@ -264,6 +268,10 @@ static void window_unload(Window *window) {
 }
 
 static void init(void) {
+  // For testing a specific image:
+  /*for (i = 0; i < (sizeof(images) / sizeof(images[0])); i++) {
+    images[i] = RESOURCE_ID_PONY48;
+  }*/
   bool black_on_white = true;
   if (persist_exists(0)) {
     black_on_white = persist_read_bool(0);
@@ -287,12 +295,14 @@ static void init(void) {
   window_stack_push(window, animated);
 
   tick_timer_service_subscribe(MINUTE_UNIT, tick_handler);
+  battery_state_service_subscribe(battery_handler);
 
   app_message_register_inbox_received(app_message_inbox_received);
   app_message_open(30, 0);
 }
 
 static void deinit(void) {
+  battery_state_service_unsubscribe();
   tick_timer_service_unsubscribe();
   app_message_deregister_callbacks();
   window_stack_pop_all(true);

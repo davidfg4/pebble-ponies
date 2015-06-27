@@ -1,14 +1,18 @@
 #include <pebble.h>
 
-int i;
+static int i;
 static Window *window;
 static TextLayer* s_time_layer;
 static TextLayer* s_time_shadow_layers[4];
 static TextLayer* s_date_layer;
 static TextLayer* s_date_shadow_layers[4];
 static Layer* battery_layer;
+static Layer* background_layer;
 static GBitmap* s_bitmap;
 static BitmapLayer *s_bitmap_layer;
+static GColor foreground_color;
+static GColor background_color;
+// There's probably a better way to do this:
 static uint32_t images[] = {RESOURCE_ID_PONY01,
                             RESOURCE_ID_PONY02,
                             RESOURCE_ID_PONY03,
@@ -80,18 +84,25 @@ static uint32_t images[] = {RESOURCE_ID_PONY01,
                             RESOURCE_ID_PONY69,
                             RESOURCE_ID_PONY70};
 
+static void draw_background(Layer *layer, GContext *ctx) {
+  GRect bounds = layer_get_bounds(layer);
+
+  graphics_context_set_fill_color(ctx, background_color);
+  graphics_fill_rect(ctx, bounds, 0, GCornerNone);
+}
+
 static void draw_battery(Layer *layer, GContext *ctx) {
   BatteryChargeState charge_state = battery_state_service_peek();
   GRect bounds = layer_get_bounds(layer);
 
-  // Draw white around battery meter
-  graphics_context_set_stroke_color(ctx, GColorWhite);
-  graphics_context_set_fill_color(ctx, GColorWhite);
+  // Draw background color around battery meter
+  graphics_context_set_stroke_color(ctx, background_color);
+  graphics_context_set_fill_color(ctx, background_color);
   graphics_fill_rect(ctx, GRect(0,0,14,7), 0, GCornerNone);
   graphics_draw_line(ctx, GPoint(14,1), GPoint(14,5));
   // Draw battery meter border
-  graphics_context_set_stroke_color(ctx, GColorBlack);
-  graphics_context_set_fill_color(ctx, GColorBlack);
+  graphics_context_set_stroke_color(ctx, foreground_color);
+  graphics_context_set_fill_color(ctx, foreground_color);
   graphics_draw_rect(ctx, GRect(1,1,12,5));
   graphics_draw_line(ctx, GPoint(13,2), GPoint(13,4));
   // Draw battery meter
@@ -105,12 +116,6 @@ static void update_time() {
   static char buffer[] = "00:00";
   static char date_text[] = "Xxx, Xxx 00";
 
-  strftime(date_text, sizeof(date_text), "%a, %b %e", tick_time);
-  text_layer_set_text(s_date_layer, date_text);
-  for (i = 0; i < 4; i++) {
-    text_layer_set_text(s_date_shadow_layers[i], date_text);
-  }
-
   if(clock_is_24h_style() == true) {
     strftime(buffer, sizeof("00:00"), "%H:%M", tick_time);
   } else {
@@ -119,10 +124,15 @@ static void update_time() {
         memmove(buffer, &buffer[1], sizeof(buffer) - 1);
     }
   }
-
   text_layer_set_text(s_time_layer, buffer);
   for (i = 0; i < 4; i++) {
     text_layer_set_text(s_time_shadow_layers[i], buffer);
+  }
+
+  strftime(date_text, sizeof(date_text), "%a, %b %e", tick_time);
+  text_layer_set_text(s_date_layer, date_text);
+  for (i = 0; i < 4; i++) {
+    text_layer_set_text(s_date_shadow_layers[i], date_text);
   }
 
   gbitmap_destroy(s_bitmap);
@@ -139,64 +149,77 @@ static void window_load(Window *window) {
   Layer *window_layer = window_get_root_layer(window);
   GRect bounds = layer_get_bounds(window_layer);
 
+  // Add the background color layer
+  background_layer = layer_create(bounds);
+  layer_set_update_proc(background_layer, draw_background);
+  layer_add_child(window_layer, background_layer);
+
+  // Create the layer used for the images
   s_bitmap = gbitmap_create_with_resource(images[0]);
   s_bitmap_layer = bitmap_layer_create(bounds);
   bitmap_layer_set_bitmap(s_bitmap_layer, s_bitmap);
   bitmap_layer_set_compositing_mode(s_bitmap_layer, GCompOpSet);
-
   layer_add_child(window_layer, bitmap_layer_get_layer(s_bitmap_layer));
 
+  // Set up the time text
   s_time_layer = text_layer_create(GRect(0, 168-56, 144, 56));
   text_layer_set_background_color(s_time_layer, GColorClear);
-  text_layer_set_text_color(s_time_layer, GColorBlack);
+  text_layer_set_text_color(s_time_layer, foreground_color);
   text_layer_set_text(s_time_layer, "00:00");
   text_layer_set_font(s_time_layer, fonts_get_system_font(FONT_KEY_ROBOTO_BOLD_SUBSET_49));
   text_layer_set_text_alignment(s_time_layer, GTextAlignmentCenter);
 
+  // Around the time text put four copies in the opposite color for readability
   s_time_shadow_layers[0] = text_layer_create(GRect(2, 168-56+2, 144, 56));
   s_time_shadow_layers[1] = text_layer_create(GRect(2, 168-56-2, 144, 56));
   s_time_shadow_layers[2] = text_layer_create(GRect(-2, 168-56+2, 144, 56));
   s_time_shadow_layers[3] = text_layer_create(GRect(i-2, 168-56-2, 144, 56));
   for (i = 0; i < 4; i++) {
     text_layer_set_background_color(s_time_shadow_layers[i], GColorClear);
-    text_layer_set_text_color(s_time_shadow_layers[i], GColorWhite);
+    text_layer_set_text_color(s_time_shadow_layers[i], background_color);
     text_layer_set_text(s_time_shadow_layers[i], "00:00");
     text_layer_set_font(s_time_shadow_layers[i], fonts_get_system_font(FONT_KEY_ROBOTO_BOLD_SUBSET_49));
     text_layer_set_text_alignment(s_time_shadow_layers[i], GTextAlignmentCenter);
     layer_add_child(window_layer, text_layer_get_layer(s_time_shadow_layers[i]));
   }
+  // Add the time text afterwards so it is on top
+  layer_add_child(window_layer, text_layer_get_layer(s_time_layer));
 
+  // Set up the date text
   s_date_layer = text_layer_create(GRect(0, 0, 144, 40));
   text_layer_set_background_color(s_date_layer, GColorClear);
-  text_layer_set_text_color(s_date_layer, GColorBlack);
+  text_layer_set_text_color(s_date_layer, foreground_color);
   text_layer_set_text(s_date_layer, "Xxx, Xxx 00");
   text_layer_set_font(s_date_layer, fonts_get_system_font(FONT_KEY_ROBOTO_CONDENSED_21));
   text_layer_set_text_alignment(s_date_layer, GTextAlignmentCenter);
 
+  // Around the date text put four copies in the opposite color for readability
   s_date_shadow_layers[0] = text_layer_create(GRect(1, 1, 144, 40));
   s_date_shadow_layers[1] = text_layer_create(GRect(1,- 1, 144, 40));
   s_date_shadow_layers[2] = text_layer_create(GRect(-1, 1, 144, 40));
   s_date_shadow_layers[3] = text_layer_create(GRect(-1, -1, 144, 40));
   for (i = 0; i < 4; i++) {
     text_layer_set_background_color(s_date_shadow_layers[i], GColorClear);
-    text_layer_set_text_color(s_date_shadow_layers[i], GColorWhite);
+    text_layer_set_text_color(s_date_shadow_layers[i], background_color);
     text_layer_set_text(s_date_shadow_layers[i], "Xxx, Xxx 00");
     text_layer_set_font(s_date_shadow_layers[i], fonts_get_system_font(FONT_KEY_ROBOTO_CONDENSED_21));
     text_layer_set_text_alignment(s_date_shadow_layers[i], GTextAlignmentCenter);
     layer_add_child(window_layer, text_layer_get_layer(s_date_shadow_layers[i]));
   }
-
-  layer_add_child(window_layer, text_layer_get_layer(s_time_layer));
+  // Add the date text after so it is on top
   layer_add_child(window_layer, text_layer_get_layer(s_date_layer));
 
+  // Add the battery meter layer
   battery_layer = layer_create(GRect(125, 5, 15, 7));
   layer_set_update_proc(battery_layer, draw_battery);
   layer_add_child(window_layer, battery_layer);
 
+  // Update everything with the current date/time and a new image
   update_time();
 }
 
 static void window_unload(Window *window) {
+  layer_destroy(battery_layer);
   text_layer_destroy(s_time_layer);
   for (i = 0; i < 4; i++) {
     text_layer_destroy(s_time_shadow_layers[i]);
@@ -206,11 +229,13 @@ static void window_unload(Window *window) {
     text_layer_destroy(s_date_shadow_layers[i]);
   }
   bitmap_layer_destroy(s_bitmap_layer);
-  layer_destroy(battery_layer);
   gbitmap_destroy(s_bitmap);
 }
 
 static void init(void) {
+  foreground_color = GColorWhite;
+  background_color = GColorBlack;
+
   window = window_create();
   window_set_window_handlers(window, (WindowHandlers) {
     .load = window_load,

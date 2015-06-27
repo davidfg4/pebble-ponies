@@ -1,5 +1,10 @@
 #include <pebble.h>
 
+// Function prototypes
+static void init(void);
+static void deinit(void);
+static void update_time(bool new_image);
+
 static int i;
 static Window *window;
 static TextLayer* s_time_layer;
@@ -84,6 +89,29 @@ static uint32_t images[] = {RESOURCE_ID_PONY01,
                             RESOURCE_ID_PONY69,
                             RESOURCE_ID_PONY70};
 
+static void app_message_inbox_received(DictionaryIterator *iterator, void *context) {
+  Tuple *t = dict_find(iterator, 0);
+  bool black_on_white = t->value->int32;
+  status_t s = persist_write_bool(0, black_on_white);
+  if (black_on_white) {
+    foreground_color = GColorBlack;
+    background_color = GColorWhite;
+  } else {
+    foreground_color = GColorWhite;
+    background_color = GColorBlack;
+  }
+
+  text_layer_set_text_color(s_time_layer, foreground_color);
+  for (i = 0; i < 4; i++) {
+    text_layer_set_text_color(s_time_shadow_layers[i], background_color);
+  }
+  text_layer_set_text_color(s_date_layer, foreground_color);
+  for (i = 0; i < 4; i++) {
+    text_layer_set_text_color(s_date_shadow_layers[i], background_color);
+  }
+  update_time(false);
+}
+
 static void draw_background(Layer *layer, GContext *ctx) {
   GRect bounds = layer_get_bounds(layer);
 
@@ -109,7 +137,7 @@ static void draw_battery(Layer *layer, GContext *ctx) {
   graphics_fill_rect(ctx, GRect(2,2,charge_state.charge_percent/10,3), 0, GCornerNone);
 }
 
-static void update_time() {
+static void update_time(bool new_image) {
   time_t temp = time(NULL); 
   struct tm *tick_time = localtime(&temp);
 
@@ -135,14 +163,16 @@ static void update_time() {
     text_layer_set_text(s_date_shadow_layers[i], date_text);
   }
 
-  gbitmap_destroy(s_bitmap);
-  int image = rand() % (sizeof(images) / sizeof(images[0]));
-  s_bitmap = gbitmap_create_with_resource(images[image]);
-  bitmap_layer_set_bitmap(s_bitmap_layer, s_bitmap);
+  if (new_image) {
+    gbitmap_destroy(s_bitmap);
+    int image = rand() % (sizeof(images) / sizeof(images[0]));
+    s_bitmap = gbitmap_create_with_resource(images[image]);
+    bitmap_layer_set_bitmap(s_bitmap_layer, s_bitmap);
+  }
 }
 
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
-  update_time();
+  update_time(true);
 }
 
 static void window_load(Window *window) {
@@ -155,7 +185,8 @@ static void window_load(Window *window) {
   layer_add_child(window_layer, background_layer);
 
   // Create the layer used for the images
-  s_bitmap = gbitmap_create_with_resource(images[0]);
+  int image = rand() % (sizeof(images) / sizeof(images[0]));
+  s_bitmap = gbitmap_create_with_resource(images[image]);
   s_bitmap_layer = bitmap_layer_create(bounds);
   bitmap_layer_set_bitmap(s_bitmap_layer, s_bitmap);
   bitmap_layer_set_compositing_mode(s_bitmap_layer, GCompOpSet);
@@ -214,8 +245,8 @@ static void window_load(Window *window) {
   layer_set_update_proc(battery_layer, draw_battery);
   layer_add_child(window_layer, battery_layer);
 
-  // Update everything with the current date/time and a new image
-  update_time();
+  // Update everything with the current date/time
+  update_time(false);
 }
 
 static void window_unload(Window *window) {
@@ -233,8 +264,19 @@ static void window_unload(Window *window) {
 }
 
 static void init(void) {
-  foreground_color = GColorWhite;
-  background_color = GColorBlack;
+  bool black_on_white = true;
+  if (persist_exists(0)) {
+    black_on_white = persist_read_bool(0);
+  } else {
+    persist_write_bool(0, black_on_white);
+  }
+  if (black_on_white) {
+    foreground_color = GColorBlack;
+    background_color = GColorWhite;
+  } else {
+    foreground_color = GColorWhite;
+    background_color = GColorBlack;
+  }
 
   window = window_create();
   window_set_window_handlers(window, (WindowHandlers) {
@@ -245,9 +287,15 @@ static void init(void) {
   window_stack_push(window, animated);
 
   tick_timer_service_subscribe(MINUTE_UNIT, tick_handler);
+
+  app_message_register_inbox_received(app_message_inbox_received);
+  app_message_open(30, 0);
 }
 
 static void deinit(void) {
+  tick_timer_service_unsubscribe();
+  app_message_deregister_callbacks();
+  window_stack_pop_all(true);
   window_destroy(window);
 }
 

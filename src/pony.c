@@ -47,7 +47,12 @@ static uint32_t images[] = {RESOURCE_ID_PONY01,
                             RESOURCE_ID_PONY27,
                             RESOURCE_ID_PONY28,
                             RESOURCE_ID_PONY29,
-                            RESOURCE_ID_PONY30,
+                            RESOURCE_ID_PONY30
+#ifdef PBL_PLATFORM_APLITE
+                            };
+#endif
+#ifdef PBL_PLATFORM_BASALT
+                            ,
                             RESOURCE_ID_PONY31,
                             RESOURCE_ID_PONY32,
                             RESOURCE_ID_PONY33,
@@ -88,6 +93,7 @@ static uint32_t images[] = {RESOURCE_ID_PONY01,
                             RESOURCE_ID_PONY68,
                             RESOURCE_ID_PONY69,
                             RESOURCE_ID_PONY70};
+#endif
 
 static void app_message_inbox_received(DictionaryIterator *iterator, void *context) {
   Tuple *t = dict_find(iterator, 0);
@@ -193,7 +199,12 @@ static void window_load(Window *window) {
   s_bitmap = gbitmap_create_with_resource(images[image]);
   s_bitmap_layer = bitmap_layer_create(bounds);
   bitmap_layer_set_bitmap(s_bitmap_layer, s_bitmap);
+#ifdef PBL_PLATFORM_APLITE
+  bitmap_layer_set_compositing_mode(s_bitmap_layer, GCompOpAssign);
+#endif
+#ifdef PBL_PLATFORM_BASALT
   bitmap_layer_set_compositing_mode(s_bitmap_layer, GCompOpSet);
+#endif
   layer_add_child(window_layer, bitmap_layer_get_layer(s_bitmap_layer));
 
   // Set up the time text

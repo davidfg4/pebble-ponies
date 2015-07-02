@@ -1,7 +1,7 @@
 {
   "uuid": "8c92b002-47e5-4123-809b-35fd2a9f982c",
-  "shortName": "pony",
-  "longName": "pony",
+  "shortName": "Ponies",
+  "longName": "Ponies",
   "capabilities": [ "configurable" ],
   "companyName": "David Gianforte",
   "versionCode": 1,
@@ -14,6 +14,7 @@
   },
   "resources": {
     "media": [
+      {"type": "png", "name": "IMAGE_MENU_ICON", "file": "menu_icon.png", "menuIcon": true},
       {"type": "png", "name": "PONY01", "file": "images/a_dash_of_adorable_by_redtoxindash-d6bdrma.png"},
       {"type": "png", "name": "PONY02", "file": "images/applejack_by_energyfrost-d5zotp6.png"},
       {"type": "png", "name": "PONY03", "file": "images/balloons_by_jennieoo-d5e8t2g.png"},

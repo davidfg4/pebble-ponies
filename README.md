@@ -2,8 +2,13 @@ Pebble Ponies
 =============
 
 This Pebble app is a simple watchface which displays the time, date, and a random pony each minute.
-This is a SDK 3.0 watchface. It has been designed for the Pebble Time and works the best on that platform.
-This watch does work on the original black and white Pebble, although it is limted to 30 images due to space constraints. Also it looks terrible.
+There is a small battery meter in the top right. The watchface supports black on white text or white on black text through the settings.
+This is a SDK 3.0 watchface. It has been designed for the Pebble Time and works best on that platform.
+
+This watch does work on the original black and white Pebble, although it is limited to 30 images due to space constraints. Also it looks terrible.
+
+![](https://raw.githubusercontent.com/davidfg4/pebble-ponies/master/screenshot01.png "Screenshot 1")
+![](https://raw.githubusercontent.com/davidfg4/pebble-ponies/master/screenshot02.png "Screenshot 2")
 
 Install
 -------

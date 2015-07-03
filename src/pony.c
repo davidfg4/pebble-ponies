@@ -281,7 +281,7 @@ static void window_unload(Window *window) {
 static void init(void) {
   // For testing a specific image:
   /*for (i = 0; i < (sizeof(images) / sizeof(images[0])); i++) {
-    images[i] = RESOURCE_ID_PONY48;
+    images[i] = RESOURCE_ID_PONY46;
   }*/
   bool black_on_white = true;
   if (persist_exists(0)) {

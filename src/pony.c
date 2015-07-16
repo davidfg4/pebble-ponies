@@ -182,7 +182,9 @@ static void battery_handler(BatteryChargeState charge) {
 }
 
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
-  update_time(true);
+  if (units_changed & MINUTE_UNIT) {
+    update_time(true);
+  }
 }
 
 static void window_load(Window *window) {

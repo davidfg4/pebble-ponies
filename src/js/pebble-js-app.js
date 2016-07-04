@@ -9,7 +9,7 @@ Pebble.addEventListener('showConfiguration',
 );
 Pebble.addEventListener('webviewclosed',
   function(e) {
-    if (e.response == "true") {
+    if (e.response.substr(-4) == "true") {
       Pebble.sendAppMessage({"0": 1});
     } else {
       Pebble.sendAppMessage({"0": 0});

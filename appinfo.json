@@ -4,8 +4,8 @@
   "longName": "Ponies",
   "capabilities": [ "configurable" ],
   "companyName": "David Gianforte",
-  "versionCode": 3,
-  "versionLabel": "1.2",
+  "versionCode": 4,
+  "versionLabel": "1.3",
   "watchapp": {
     "watchface": true
   },
